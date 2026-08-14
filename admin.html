@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Haier</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5cd8'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='34' font-weight='bold' fill='white' text-anchor='middle'%3EH%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f1f5fb; min-height: 100vh; }
+    .topbar { background: #0b5cd8; color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar .brand { font-weight: 700; font-size: 18px; }
+    .topbar .brand small { font-weight: 400; opacity: 0.8; }
+    .topbar-actions { display: flex; align-items: center; gap: 14px; }
+    .topbar-actions .admin-email { font-size: 13px; opacity: 0.9; }
+    .btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; }
+    .btn-light { background: #fff; color: #0b5cd8; }
+    .btn-danger { background: #e74c3c; color: #fff; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+    .auth-card { background: #fff; border-radius: 16px; padding: 34px 30px; width: 100%; max-width: 400px; box-shadow: 0 15px 40px rgba(11, 92, 216, 0.12); }
+    .auth-card h2 { font-size: 22px; color: #10263f; margin-bottom: 4px; }
+    .auth-card p.sub { color: #7a8699; font-size: 13px; margin-bottom: 22px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #10263f; margin-bottom: 6px; }
+    .field input { width: 100%; padding: 12px 14px; border: 1.5px solid #dbe3f0; border-radius: 10px; font-family: inherit; font-size: 14px; outline: none; }
+    .field input:focus { border-color: #0b5cd8; }
+    .btn-primary { background: #0b5cd8; color: #fff; width: 100%; padding: 13px; }
+    .btn-primary:hover { background: #094db5; }
+    .err { color: #c0392b; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(11, 92, 216, 0.08); }
+    .stat-card .num { font-size: 30px; font-weight: 800; color: #0b5cd8; }
+    .stat-card .label { font-size: 13px; color: #7a8699; margin-top: 4px; }
+
+    .panel { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(11, 92, 216, 0.08); margin-bottom: 24px; overflow-x: auto; }
+    .panel h3 { color: #10263f; font-size: 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .panel .refresh { background: #eef3fd; color: #0b5cd8; border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 8px; color: #7a8699; font-weight: 600; border-bottom: 2px solid #eef2f9; white-space: nowrap; }
+    td { padding: 10px 8px; border-bottom: 1px solid #eef2f9; color: #10263f; vertical-align: top; }
+    tr:hover td { background: #f8fafd; }
+    .empty { text-align: center; color: #9aa7bd; padding: 24px; }
+    .del { background: #fdecec; color: #c0392b; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; }
+    .edit-btn { background: #eef3fd; color: #0b5cd8; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; margin-right: 6px; }
+    .save-btn { background: #e8f5e9; color: #2e7d32; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; margin-right: 6px; }
+    .cancel-btn { background: #f4f6f9; color: #5b6b7f; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; margin-right: 6px; }
+    td input { width: 100%; min-width: 90px; padding: 6px 8px; border: 1.5px solid #dbe3f0; border-radius: 6px; font-family: inherit; font-size: 13px; }
+    td input:focus { border-color: #0b5cd8; outline: none; }
+    .pass { font-family: Consolas, monospace; font-size: 12px; color: #5b6b7f; word-break: break-all; }
+    .badge { display: inline-block; background: #e8f5e9; color: #2e7d32; border-radius: 6px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Haier <small>Admin Panel</small></div>
+    <div class="topbar-actions">
+      <span class="admin-email" id="adminEmail"></span>
+      <button class="btn btn-light" id="logoutBtn" style="display:none">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="loginSection">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <h2>Admin Login</h2>
+          <p class="sub">Enter admin credentials to continue</p>
+          <p class="err" id="authError"></p>
+          <form id="loginForm">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" id="loginEmail" placeholder="admin email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" id="loginPassword" placeholder="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="dashboardSection" style="display:none">
+      <div class="stats">
+        <div class="stat-card"><div class="num" id="statBookings">-</div><div class="label">Total Bookings</div></div>
+        <div class="stat-card"><div class="num" id="statUsers">-</div><div class="label">Total Users</div></div>
+      </div>
+
+      <div class="panel">
+        <h3>Bookings <button class="refresh" id="refreshBtn">Refresh</button></h3>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Phone</th><th>Service</th><th>Date</th><th>Time</th><th>Address</th><th>Message</th><th>Submitted</th><th></th></tr>
+          </thead>
+          <tbody id="bookingsBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>Users <button class="refresh" id="refreshUsersBtn">Refresh</button></h3>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Password</th><th>Joined</th><th></th></tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+      var loginSection = document.getElementById('loginSection');
+      var dashboardSection = document.getElementById('dashboardSection');
+      var logoutBtn = document.getElementById('logoutBtn');
+      var loginForm = document.getElementById('loginForm');
+      var errorEl = document.getElementById('authError');
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+      }
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function fmtDate(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleString();
+      }
+
+      var editState = { booking: null, user: null };
+
+      function loadData() {
+        return Promise.all([
+          fetch('/api/admin/bookings').then(function (r) { return r.ok ? r.json() : []; }),
+          fetch('/api/admin/users').then(function (r) { return r.ok ? r.json() : []; })
+        ]);
+      }
+
+      function renderBookings(bookings) {
+        document.getElementById('statBookings').textContent = bookings.length;
+        var tbody = document.getElementById('bookingsBody');
+        if (!bookings.length) {
+          tbody.innerHTML = '<tr><td colspan="11" class="empty">No bookings yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = bookings.map(function (b) {
+          var editing = editState.booking === b._id;
+          var cells = ['name', 'email', 'phone', 'serviceType', 'date', 'time', 'address', 'message'].map(function (f) {
+            if (editing) return '<td><input data-f="' + f + '" value="' + esc(b[f]) + '"></td>';
+            return '<td>' + esc(b[f]) + '</td>';
+          }).join('');
+          var actions;
+          if (editing) {
+            actions = '<td><button class="save-btn" data-save-booking="' + b._id + '">Save</button>' +
+              '<button class="cancel-btn" data-cancel-booking="' + b._id + '">Cancel</button></td>';
+          } else {
+            actions = '<td><button class="edit-btn" data-edit-booking="' + b._id + '">Edit</button>' +
+              '<button class="del" data-del-booking="' + b._id + '">Delete</button></td>';
+          }
+          return '<tr>' + cells + '<td>' + fmtDate(b.submittedAt) + '</td>' + actions + '</tr>';
+        }).join('');
+      }
+
+      function renderUsers(users) {
+        document.getElementById('statUsers').textContent = users.length;
+        var tbody = document.getElementById('usersBody');
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty">No users yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = users.map(function (u) {
+          var editing = editState.user === u._id;
+          var row;
+          if (editing) {
+            row = '<td><input data-f="name" value="' + esc(u.name) + '"></td>' +
+              '<td><input data-f="email" value="' + esc(u.email) + '"></td>' +
+              '<td><input data-f="password" type="password" value="' + esc(u.passwordPlain || '') + '"></td>' +
+              '<td>' + fmtDate(u.createdAt) + '</td>' +
+              '<td><button class="save-btn" data-save-user="' + u._id + '">Save</button>' +
+              '<button class="cancel-btn" data-cancel-user="' + u._id + '">Cancel</button></td>';
+          } else {
+            row = '<td>' + esc(u.name) + '</td>' +
+              '<td>' + esc(u.email) + '</td>' +
+              '<td><span class="pass">' + esc(u.passwordPlain || '-') + '</span></td>' +
+              '<td>' + fmtDate(u.createdAt) + '</td>' +
+              '<td><button class="edit-btn" data-edit-user="' + u._id + '">Edit</button>' +
+              '<button class="del" data-del-user="' + u._id + '">Delete</button></td>';
+          }
+          return '<tr>' + row + '</tr>';
+        }).join('');
+      }
+
+      function refresh() {
+        loadData().then(function (results) {
+          renderBookings(results[0]);
+          renderUsers(results[1]);
+        });
+      }
+
+      function checkAuth() {
+        return fetch('/api/admin/me')
+          .then(function (r) {
+            if (r.ok) return true;
+            return false;
+          })
+          .catch(function () { return false; });
+      }
+
+      checkAuth().then(function (isAdmin) {
+        if (isAdmin) {
+          loginSection.style.display = 'none';
+          dashboardSection.style.display = '';
+          logoutBtn.style.display = '';
+          refresh();
+        }
+      });
+
+      loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        errorEl.style.display = 'none';
+        fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value.trim(),
+            password: document.getElementById('loginPassword').value
+          })
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (result) {
+            if (result.ok) {
+              loginSection.style.display = 'none';
+              dashboardSection.style.display = '';
+              logoutBtn.style.display = '';
+              refresh();
+            } else {
+              showError(result.data.message || 'Login failed.');
+            }
+          })
+          .catch(function () { showError('Network error. Please try again.'); })
+          .finally(function () { btn.disabled = false; });
+      });
+
+      logoutBtn.addEventListener('click', function () {
+        fetch('/api/admin/logout', { method: 'POST' }).then(function () {
+          window.location.href = '/admin.html';
+        });
+      });
+
+      document.getElementById('refreshBtn').addEventListener('click', refresh);
+      document.getElementById('refreshUsersBtn').addEventListener('click', refresh);
+
+      document.getElementById('bookingsBody').addEventListener('click', function (e) {
+        var btn;
+        btn = e.target.closest('[data-del-booking]');
+        if (btn) {
+          if (!confirm('Delete this booking?')) return;
+          fetch('/api/admin/bookings/' + btn.getAttribute('data-del-booking'), { method: 'DELETE' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d.success) refresh(); });
+          return;
+        }
+        btn = e.target.closest('[data-edit-booking]');
+        if (btn) {
+          editState.booking = btn.getAttribute('data-edit-booking');
+          refresh();
+          return;
+        }
+        btn = e.target.closest('[data-cancel-booking]');
+        if (btn) {
+          editState.booking = null;
+          refresh();
+          return;
+        }
+        btn = e.target.closest('[data-save-booking]');
+        if (btn) {
+          var id = btn.getAttribute('data-save-booking');
+          var tr = btn.closest('tr');
+          var body = {};
+          tr.querySelectorAll('input[data-f]').forEach(function (inp) {
+            body[inp.getAttribute('data-f')] = inp.value;
+          });
+          fetch('/api/admin/bookings/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              editState.booking = null;
+              if (d.success) refresh();
+              else alert(d.message || 'Failed to update booking.');
+            });
+        }
+      });
+
+      document.getElementById('usersBody').addEventListener('click', function (e) {
+        var btn;
+        btn = e.target.closest('[data-del-user]');
+        if (btn) {
+          if (!confirm('Delete this user?')) return;
+          fetch('/api/admin/users/' + btn.getAttribute('data-del-user'), { method: 'DELETE' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d.success) refresh(); });
+          return;
+        }
+        btn = e.target.closest('[data-edit-user]');
+        if (btn) {
+          editState.user = btn.getAttribute('data-edit-user');
+          refresh();
+          return;
+        }
+        btn = e.target.closest('[data-cancel-user]');
+        if (btn) {
+          editState.user = null;
+          refresh();
+          return;
+        }
+        btn = e.target.closest('[data-save-user]');
+        if (btn) {
+          var id = btn.getAttribute('data-save-user');
+          var tr = btn.closest('tr');
+          var body = {};
+          tr.querySelectorAll('input[data-f]').forEach(function (inp) {
+            body[inp.getAttribute('data-f')] = inp.value;
+          });
+          fetch('/api/admin/users/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              editState.user = null;
+              if (d.success) refresh();
+              else alert(d.message || 'Failed to update user.');
+            });
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

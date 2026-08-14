@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Haier AC Services</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5cd8'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='34' font-weight='bold' fill='white' text-anchor='middle'%3EH%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(160deg, #0b5cd8 0%, #083b8f 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-card {
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      padding: 36px 32px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+    }
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .auth-logo-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #0b5cd8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .auth-logo-icon svg { width: 24px; height: 24px; }
+    .auth-title { text-align: center; font-size: 24px; font-weight: 700; color: #10263f; }
+    .auth-sub { text-align: center; color: #7a8699; font-size: 14px; margin: 6px 0 24px; }
+    .tabs { display: flex; background: #f1f5fb; border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: #7a8699;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active { background: #0b5cd8; color: #fff; box-shadow: 0 4px 12px rgba(11, 92, 216, 0.3); }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #10263f; margin-bottom: 6px; }
+    .field input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #dbe3f0;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #10263f;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fbfdff;
+    }
+    .field input:focus { border-color: #0b5cd8; background: #fff; }
+    .auth-error {
+      background: #fdecec;
+      color: #c0392b;
+      border: 1px solid #f5c6c6;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 13px 0;
+      background: #0b5cd8;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-btn:hover { background: #094db5; }
+    .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .auth-switch { text-align: center; margin-top: 18px; font-size: 14px; color: #7a8699; }
+    .auth-switch button { background: none; border: none; color: #0b5cd8; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="9" rx="2"></rect><path d="M8 20h8M9 7V4m6 3V4M12 7v2"></path></svg>
+      </span>
+      <span class="auth-title">Haier</span>
+    </div>
+    <p class="auth-sub">Login to book your AC service</p>
+
+    <div class="tabs">
+      <button type="button" class="tab active" id="tabLogin">Login</button>
+      <button type="button" class="tab" id="tabSignup">Sign Up</button>
+    </div>
+
+    <p class="auth-error" id="authError"></p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="e.g. john@email.com" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="auth-btn" id="loginBtn">Login</button>
+    </form>
+
+    <form id="signupForm" style="display:none">
+      <div class="field">
+        <label for="signupName">Full Name</label>
+        <input type="text" id="signupName" placeholder="e.g. John Smith" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" placeholder="e.g. john@email.com" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="signupPassword">Password</label>
+        <input type="password" id="signupPassword" placeholder="At least 6 characters" autocomplete="new-password" required>
+      </div>
+      <button type="submit" class="auth-btn" id="signupBtn">Create Account</button>
+    </form>
+
+    <form id="otpForm" style="display:none">
+      <p class="auth-sub">A 6-digit security code has been sent to your email. Enter it below.</p>
+      <div class="field">
+        <label for="otpCode">Security Code</label>
+        <input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit code" autocomplete="one-time-code" required>
+      </div>
+      <button type="submit" class="auth-btn" id="verifyBtn">Verify Account</button>
+      <div class="auth-switch">
+        Didn't get the code?
+        <button type="button" id="resendBtn">Resend</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+      var loginForm = document.getElementById('loginForm');
+      var signupForm = document.getElementById('signupForm');
+      var otpForm = document.getElementById('otpForm');
+      var errorEl = document.getElementById('authError');
+      var tabLogin = document.getElementById('tabLogin');
+      var tabSignup = document.getElementById('tabSignup');
+      var pendingEmail = '';
+
+      function switchTab(mode) {
+        var isLogin = mode === 'login';
+        tabLogin.classList.toggle('active', isLogin);
+        tabSignup.classList.toggle('active', !isLogin);
+        loginForm.style.display = isLogin ? '' : 'none';
+        signupForm.style.display = isLogin ? 'none' : '';
+        otpForm.style.display = 'none';
+        errorEl.style.display = 'none';
+      }
+
+      function showOtpStep(email) {
+        pendingEmail = email;
+        tabLogin.style.display = 'none';
+        tabSignup.style.display = 'none';
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'none';
+        otpForm.style.display = '';
+        document.getElementById('otpCode').value = '';
+        document.getElementById('otpCode').focus();
+        errorEl.style.display = 'none';
+      }
+
+      tabLogin.addEventListener('click', function () { switchTab('login'); });
+      tabSignup.addEventListener('click', function () { switchTab('signup'); });
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+      }
+
+      function submit(btn, url, payload, onSuccess) {
+        btn.disabled = true;
+        var original = btn.textContent;
+        btn.textContent = 'Please wait...';
+        errorEl.style.display = 'none';
+
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (result) {
+            if (result.ok) {
+              if (onSuccess) onSuccess(result.data);
+            } else {
+              showError(result.data.message || 'Something went wrong. Please try again.');
+            }
+          })
+          .catch(function () {
+            showError('Network error. Please check your connection.');
+          })
+          .finally(function () {
+            btn.disabled = false;
+            btn.textContent = original;
+          });
+      }
+
+      loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submit(document.getElementById('loginBtn'), '/api/login', {
+          email: document.getElementById('loginEmail').value.trim(),
+          password: document.getElementById('loginPassword').value
+        }, function () { window.location.href = '/'; });
+      });
+
+      signupForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = document.getElementById('signupEmail').value.trim();
+        submit(document.getElementById('signupBtn'), '/api/register', {
+          name: document.getElementById('signupName').value.trim(),
+          email: email,
+          password: document.getElementById('signupPassword').value
+        }, function () { showOtpStep(email); });
+      });
+
+      otpForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submit(document.getElementById('verifyBtn'), '/api/verify', {
+          email: pendingEmail,
+          code: document.getElementById('otpCode').value.trim()
+        }, function () { window.location.href = '/'; });
+      });
+
+      document.getElementById('resendBtn').addEventListener('click', function (e) {
+        var btn = document.getElementById('resendBtn');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        fetch('/api/resend-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d.success) {
+              showError('A new code has been sent to your email.');
+              errorEl.style.background = '#e8f5e9';
+              errorEl.style.borderColor = '#a5d6a7';
+              errorEl.style.color = '#2e7d32';
+            } else {
+              showError(d.message || 'Could not resend. Try again.');
+            }
+          })
+          .catch(function () { showError('Network error. Please try again.'); })
+          .finally(function () {
+            btn.disabled = false;
+            btn.textContent = 'Resend';
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
