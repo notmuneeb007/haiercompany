@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://haiercompany-production.up.railway.app/sitemap.xml
+Sitemap: https://airnovacompany-production.up.railway.app/sitemap.xml

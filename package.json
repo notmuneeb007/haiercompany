@@ -1,7 +1,7 @@
 {
-  "name": "haier-contact",
+  "name": "airnova-contact",
   "version": "1.0.0",
-  "description": "Haier AC services contact form with Brevo transactional email",
+  "description": "AirNova AC services contact form with Brevo transactional email",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
