@@ -1,7 +1,7 @@
 {
-  "name": "airnova-contact",
+  "name": "airovex-contact",
   "version": "1.0.0",
-  "description": "AirNova AC services contact form with Brevo transactional email",
+  "description": "AirOvex AC services contact form with Brevo transactional email",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
