@@ -62,7 +62,12 @@ function requireAdminApi(req, res, next) {
   return res.status(401).json({ success: false, message: 'Admin access required.' });
 }
 
-app.get('/', requireAuth, function (req, res) {
+function requireAuthApi(req, res, next) {
+  if (req.session && (req.session.user || req.session.isAdmin)) return next();
+  return res.status(401).json({ success: false, message: 'Please login to book a service.' });
+}
+
+app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -440,7 +445,7 @@ app.get('/api/me', function (req, res) {
   }
 });
 
-app.post('/api/contact', async function (req, res) {
+app.post('/api/contact', requireAuthApi, async function (req, res) {
   const data = req.body || {};
 
   const required = ['name', 'phone', 'email', 'serviceType', 'date', 'time', 'address'];

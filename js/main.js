@@ -229,6 +229,21 @@
   bookingForm.addEventListener('submit', function (event) {
     event.preventDefault();
 
+    fetch('/api/me')
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (data.user) {
+          handleBookingSubmit();
+        } else {
+          window.location.href = '/login.html?next=/#booking';
+        }
+      })
+      .catch(function () {
+        window.location.href = '/login.html?next=/#booking';
+      });
+  });
+
+  function handleBookingSubmit() {
     const inputs = bookingForm.querySelectorAll('input, select, textarea');
     let valid = true;
 
@@ -295,7 +310,7 @@
         submitBtn.disabled = false;
         submitBtn.textContent = originalLabel;
       });
-  });
+  }
 
   bookingForm.querySelectorAll('input, select, textarea').forEach(function (input) {
     input.addEventListener('blur', function () {

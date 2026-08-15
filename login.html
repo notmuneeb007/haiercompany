@@ -180,6 +180,19 @@
       var tabSignup = document.getElementById('tabSignup');
       var pendingEmail = '';
 
+      function getNextUrl() {
+        var match = window.location.search.match(/[?&]next=([^&]+)/);
+        if (match) {
+          var next = decodeURIComponent(match[1]);
+          if (next.indexOf('http') !== 0 && next.indexOf('//') !== 0) return next;
+        }
+        return '/';
+      }
+
+      function redirectAfterAuth() {
+        window.location.href = getNextUrl();
+      }
+
       function switchTab(mode) {
         var isLogin = mode === 'login';
         tabLogin.classList.toggle('active', isLogin);
@@ -243,7 +256,7 @@
         submit(document.getElementById('loginBtn'), '/api/login', {
           email: document.getElementById('loginEmail').value.trim(),
           password: document.getElementById('loginPassword').value
-        }, function () { window.location.href = '/'; });
+        }, function () { redirectAfterAuth(); });
       });
 
       signupForm.addEventListener('submit', function (e) {
@@ -261,7 +274,7 @@
         submit(document.getElementById('verifyBtn'), '/api/verify', {
           email: pendingEmail,
           code: document.getElementById('otpCode').value.trim()
-        }, function () { window.location.href = '/'; });
+        }, function () { redirectAfterAuth(); });
       });
 
       document.getElementById('resendBtn').addEventListener('click', function (e) {
