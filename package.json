@@ -1,7 +1,7 @@
 {
-  "name": "abdulmuneebac-contact",
+  "name": "frostozaac-contact",
   "version": "1.0.0",
-  "description": "Abdul Muneeb AC AC services contact form with Brevo transactional email",
+  "description": "Frostoza AC services contact form with Brevo transactional email",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

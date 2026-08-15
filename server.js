@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'abdulmuneebac-session-secret',
+  secret: process.env.SESSION_SECRET || 'frostozaac-session-secret',
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7 }
@@ -33,7 +33,7 @@ let client;
 
 async function connectDb() {
   const uri = process.env.MONGODB_URI;
-  const dbName = process.env.MONGODB_DB || 'abdulmuneebac';
+  const dbName = process.env.MONGODB_DB || 'frostozaac';
 
   if (!uri || uri.includes('USERNAME:PASSWORD')) {
     console.warn('MongoDB URI missing in .env — skipping database connection.');
@@ -116,7 +116,7 @@ function buildEmailHtml(data) {
       <table style="width:100%;border-collapse:collapse;color:#333">
         ${items}
       </table>
-      <p style="padding:16px 24px;margin:0;color:#888;font-size:12px">Sent from the Abdul Muneeb AC website contact form.</p>
+      <p style="padding:16px 24px;margin:0;color:#888;font-size:12px">Sent from the Frostoza AC website contact form.</p>
     </div>`;
 }
 
@@ -125,7 +125,7 @@ async function sendEmail(subject, htmlContent, toEmail) {
 
   const payload = {
     sender: {
-      name: process.env.BREVO_SENDER_NAME || 'Abdul Muneeb AC',
+      name: process.env.BREVO_SENDER_NAME || 'Frostoza AC',
       email: process.env.BREVO_SENDER_EMAIL
     },
     to: [
@@ -183,7 +183,7 @@ function buildCodeEmailHtml(name, code, minutes) {
       </div>
       <div style="padding:24px;color:#333">
         <p style="margin:0 0 8px">Hi ${escapeHtml(name)},</p>
-        <p style="margin:0 0 16px">Use this code to complete your Abdul Muneeb AC account signup:</p>
+        <p style="margin:0 0 16px">Use this code to complete your Frostoza AC account signup:</p>
         <div style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#0b5cd8;background:#f1f5fb;border-radius:10px;padding:16px;text-align:center">${code}</div>
         <p style="margin:16px 0 0;color:#888;font-size:13px">This code is valid for ${minutes} minutes. If you did not request this, ignore this email.</p>
       </div>
@@ -235,7 +235,7 @@ app.post('/api/register', async function (req, res) {
 
   try {
     await sendEmail(
-      'Your Abdul Muneeb AC verification code',
+      'Your Frostoza AC verification code',
       buildCodeEmailHtml(String(name).trim(), code, 10),
       emailKey
     );
@@ -303,7 +303,7 @@ app.post('/api/resend-code', async function (req, res) {
   await db.collection('pending_users').updateOne({ email: emailKey }, { $set: { code: code, expiresAt: expiresAt } });
 
   try {
-    await sendEmail('Your Abdul Muneeb AC verification code', buildCodeEmailHtml(pending.name, code, 10), emailKey);
+    await sendEmail('Your Frostoza AC verification code', buildCodeEmailHtml(pending.name, code, 10), emailKey);
   } catch (err) {
     console.error('Verification email failed:', err.message);
     return res.status(500).json({ success: false, message: 'Could not send the security code. Please try again.' });
@@ -493,6 +493,6 @@ connectDb()
   })
   .finally(function () {
     app.listen(PORT, function () {
-      console.log('Abdul Muneeb AC server running at http://localhost:' + PORT);
+      console.log('Frostoza AC server running at http://localhost:' + PORT);
     });
   });
