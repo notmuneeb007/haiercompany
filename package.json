@@ -1,7 +1,7 @@
 {
-  "name": "frostozaac-contact",
+  "name": "zurfaelac-contact",
   "version": "1.0.0",
-  "description": "Frostoza AC services contact form with Brevo transactional email",
+  "description": "Zurfael AC services contact form with Brevo transactional email",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
