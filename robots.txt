@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://abdulmuneebaccompany-production.up.railway.app/sitemap.xml
+Sitemap: https://zurfaelac-production.up.railway.app/sitemap.xml
