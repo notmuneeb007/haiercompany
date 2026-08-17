@@ -422,6 +422,7 @@ section[id] {
   grid-template-columns: 1.05fr 0.95fr;
   gap: 60px;
   align-items: center;
+  overflow: hidden;
 }
 
 .hero__content {
