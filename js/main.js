@@ -12,16 +12,25 @@
   const backToTop = document.getElementById('backToTop');
 
   /* ---------- Mobile navigation ---------- */
+  var backdrop = document.createElement('div');
+  backdrop.className = 'nav-backdrop';
+  document.body.appendChild(backdrop);
+
   function toggleMenu(force) {
-    const isOpen = typeof force === 'boolean' ? force : !navMenu.classList.contains('open');
+    var isOpen = typeof force === 'boolean' ? force : !navMenu.classList.contains('open');
     navMenu.classList.toggle('open', isOpen);
     navToggle.classList.toggle('open', isOpen);
+    backdrop.classList.toggle('show', isOpen);
     navToggle.setAttribute('aria-expanded', String(isOpen));
     document.body.style.overflow = isOpen ? 'hidden' : '';
   }
 
   navToggle.addEventListener('click', function () {
     toggleMenu();
+  });
+
+  backdrop.addEventListener('click', function () {
+    if (navMenu.classList.contains('open')) toggleMenu(false);
   });
 
   /* ---------- Logout ---------- */
