@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const dns = require('dns');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const { MongoStore } = require('connect-mongo');
 const { MongoClient, ObjectId } = require('mongodb');
 
 dns.setServers(['8.8.8.8', '1.1.1.1']);
