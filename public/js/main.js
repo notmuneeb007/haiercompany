@@ -6,6 +6,8 @@
 (function () {
   'use strict';
 
+  var cfgBase = (typeof API_BASE !== 'undefined' ? API_BASE : '');
+
   const header = document.getElementById('header');
   const navToggle = document.getElementById('navToggle');
   const navMenu = document.getElementById('navMenu');
@@ -38,7 +40,7 @@
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function (event) {
       event.preventDefault();
-      fetch('/api/logout', { method: 'POST' })
+      fetch(cfgBase + '/api/logout', { method: 'POST' })
         .then(function () {
           window.location.href = '/login.html';
         })
@@ -238,7 +240,7 @@
   bookingForm.addEventListener('submit', function (event) {
     event.preventDefault();
 
-    fetch('/api/me')
+    fetch(cfgBase + '/api/me')
       .then(function (response) { return response.json(); })
       .then(function (data) {
         if (data.user) {
@@ -281,7 +283,7 @@
       formData[input.name] = input.value.trim();
     });
 
-    fetch('/api/contact', {
+    fetch(cfgBase + '/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)

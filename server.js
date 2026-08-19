@@ -18,7 +18,10 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || true,
+  credentials: true
+}));
 app.use(express.json());
 
 app.use(session({
@@ -68,14 +71,14 @@ function requireAuthApi(req, res, next) {
 }
 
 app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/admin', requireAdmin, function (req, res) {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 

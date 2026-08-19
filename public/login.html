@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="canonical" href="https://zurfaelac-production.up.railway.app/login.html">
+  <link rel="canonical" href="https://zurfaelac.netlify.app/login.html">
   <meta name="description" content="Login to your Zurfael AC services account to manage bookings and service history.">
   <title>Login - Zurfael AC Services</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5cd8'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='34' font-weight='bold' fill='white' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
@@ -169,9 +169,11 @@
     </form>
   </div>
 
+  <script src="js/config.js"></script>
   <script>
     (function () {
       'use strict';
+      var cfgBase = (typeof API_BASE !== 'undefined' ? API_BASE : '');
       var loginForm = document.getElementById('loginForm');
       var signupForm = document.getElementById('signupForm');
       var otpForm = document.getElementById('otpForm');
@@ -253,7 +255,7 @@
 
       loginForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        submit(document.getElementById('loginBtn'), '/api/login', {
+        submit(document.getElementById('loginBtn'), cfgBase + '/api/login', {
           email: document.getElementById('loginEmail').value.trim(),
           password: document.getElementById('loginPassword').value
         }, function () { redirectAfterAuth(); });
@@ -262,7 +264,7 @@
       signupForm.addEventListener('submit', function (e) {
         e.preventDefault();
         var email = document.getElementById('signupEmail').value.trim();
-        submit(document.getElementById('signupBtn'), '/api/register', {
+        submit(document.getElementById('signupBtn'), cfgBase + '/api/register', {
           name: document.getElementById('signupName').value.trim(),
           email: email,
           password: document.getElementById('signupPassword').value
@@ -271,7 +273,7 @@
 
       otpForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        submit(document.getElementById('verifyBtn'), '/api/verify', {
+        submit(document.getElementById('verifyBtn'), cfgBase + '/api/verify', {
           email: pendingEmail,
           code: document.getElementById('otpCode').value.trim()
         }, function () { redirectAfterAuth(); });
@@ -281,7 +283,7 @@
         var btn = document.getElementById('resendBtn');
         btn.disabled = true;
         btn.textContent = 'Sending...';
-        fetch('/api/resend-code', {
+        fetch(cfgBase + '/api/resend-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: pendingEmail })

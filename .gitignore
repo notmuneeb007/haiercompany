@@ -1,3 +1,5 @@
 node_modules/
 .env
 *.log
+server-error.log
+server.log

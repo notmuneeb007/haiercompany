@@ -116,9 +116,11 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script>
     (function () {
       'use strict';
+      var cfgBase = (typeof API_BASE !== 'undefined' ? API_BASE : '');
       var loginSection = document.getElementById('loginSection');
       var dashboardSection = document.getElementById('dashboardSection');
       var logoutBtn = document.getElementById('logoutBtn');
@@ -152,8 +154,8 @@
 
       function loadData() {
         return Promise.all([
-          fetch('/api/admin/bookings').then(function (r) { return r.ok ? r.json() : []; }),
-          fetch('/api/admin/users').then(function (r) { return r.ok ? r.json() : []; })
+          fetch(cfgBase + '/api/admin/bookings').then(function (r) { return r.ok ? r.json() : []; }),
+          fetch(cfgBase + '/api/admin/users').then(function (r) { return r.ok ? r.json() : []; })
         ]);
       }
 
@@ -219,7 +221,7 @@
       }
 
       function checkAuth() {
-        return fetch('/api/admin/me')
+        return fetch(cfgBase + '/api/admin/me')
           .then(function (r) {
             if (r.ok) return true;
             return false;
@@ -241,7 +243,7 @@
         var btn = document.getElementById('loginBtn');
         btn.disabled = true;
         errorEl.style.display = 'none';
-        fetch('/api/admin/login', {
+        fetch(cfgBase + '/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -265,7 +267,7 @@
       });
 
       logoutBtn.addEventListener('click', function () {
-        fetch('/api/admin/logout', { method: 'POST' }).then(function () {
+        fetch(cfgBase + '/api/admin/logout', { method: 'POST' }).then(function () {
           window.location.href = '/admin.html';
         });
       });
@@ -278,7 +280,7 @@
         btn = e.target.closest('[data-del-booking]');
         if (btn) {
           if (!confirm('Delete this booking?')) return;
-          fetch('/api/admin/bookings/' + btn.getAttribute('data-del-booking'), { method: 'DELETE' })
+          fetch(cfgBase + '/api/admin/bookings/' + btn.getAttribute('data-del-booking'), { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (d) { if (d.success) refresh(); });
           return;
@@ -303,7 +305,7 @@
           tr.querySelectorAll('input[data-f]').forEach(function (inp) {
             body[inp.getAttribute('data-f')] = inp.value;
           });
-          fetch('/api/admin/bookings/' + id, {
+          fetch(cfgBase + '/api/admin/bookings/' + id, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -322,7 +324,7 @@
         btn = e.target.closest('[data-del-user]');
         if (btn) {
           if (!confirm('Delete this user?')) return;
-          fetch('/api/admin/users/' + btn.getAttribute('data-del-user'), { method: 'DELETE' })
+          fetch(cfgBase + '/api/admin/users/' + btn.getAttribute('data-del-user'), { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (d) { if (d.success) refresh(); });
           return;
@@ -347,7 +349,7 @@
           tr.querySelectorAll('input[data-f]').forEach(function (inp) {
             body[inp.getAttribute('data-f')] = inp.value;
           });
-          fetch('/api/admin/users/' + id, {
+          fetch(cfgBase + '/api/admin/users/' + id, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
