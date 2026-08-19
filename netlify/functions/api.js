@@ -1,4 +1,254 @@
+const express = require('express');
+const cors = require('cors');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
+const { MongoClient, ObjectId } = require('mongodb');
 const serverless = require('serverless-http');
-const app = require('../../api/index.js');
+
+const app = express();
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
+
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DB || 'zurfaelac';
+
+let clientPromise;
+
+async function getClient() {
+  if (!clientPromise) {
+    const client = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 20000 });
+    clientPromise = client.connect();
+  }
+  return clientPromise;
+}
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'zurfaelac-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: MONGODB_URI,
+    dbName: MONGODB_DB,
+    ttl: 60 * 60 * 24 * 7
+  }),
+  cookie: { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7, sameSite: 'lax' }
+}));
+
+async function getDb() {
+  const client = await getClient();
+  return client.db(MONGODB_DB);
+}
+
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin) return next();
+  return res.status(401).json({ success: false, message: 'Admin access required.' });
+}
+
+function requireAuthApi(req, res, next) {
+  if (req.session && (req.session.user || req.session.isAdmin)) return next();
+  return res.status(401).json({ success: false, message: 'Please login to book a service.' });
+}
+
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildEmailHtml(data) {
+  var rows = [
+    ['Full Name', data.name],
+    ['Phone Number', data.phone],
+    ['Email', data.email],
+    ['Service Type', data.serviceType],
+    ['Preferred Date', data.date],
+    ['Preferred Time', data.time],
+    ['Address', data.address],
+    ['Message', data.message || '\u2014']
+  ];
+  var items = rows.map(function (row) {
+    return '<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:bold;color:#0b5cd8;width:180px;vertical-align:top">' + row[0] + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #eee">' + escapeHtml(row[1]) + '</td></tr>';
+  }).join('');
+  return '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e3e8ef;border-radius:10px;overflow:hidden">' +
+    '<div style="background:#0b5cd8;color:#fff;padding:18px 24px"><h2 style="margin:0;font-size:20px">New Service Booking Request</h2></div>' +
+    '<table style="width:100%;border-collapse:collapse;color:#333">' + items + '</table>' +
+    '<p style="padding:16px 24px;margin:0;color:#888;font-size:12px">Sent from the Zurfael AC website contact form.</p></div>';
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+}
+
+app.post('/api/register', async function (req, res) {
+  var data = req.body || {};
+  var name = data.name, email = data.email, password = data.password;
+  if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: 'Name is required.' });
+  if (!email || !isValidEmail(email)) return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+  if (!password || String(password).length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+  try {
+    var db = await getDb();
+    var emailKey = String(email).trim().toLowerCase();
+    var existing = await db.collection('users').findOne({ email: emailKey });
+    if (existing) return res.status(409).json({ success: false, message: 'This email is already registered. Please login.' });
+    var hash = await bcrypt.hash(String(password), 10);
+    await db.collection('users').insertOne({ name: String(name).trim(), email: emailKey, password: hash, passwordPlain: String(password), verified: true, createdAt: new Date() });
+    req.session.user = { name: String(name).trim(), email: emailKey };
+    res.json({ success: true, message: 'Account created successfully.' });
+  } catch (err) {
+    console.error('Register error:', err.message);
+    res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
+  }
+});
+
+app.post('/api/login', async function (req, res) {
+  var data = req.body || {};
+  if (!data.email || !data.password) return res.status(400).json({ success: false, message: 'Email and password are required.' });
+  try {
+    var db = await getDb();
+    var user = await db.collection('users').findOne({ email: String(data.email).trim().toLowerCase() });
+    if (!user || !(await bcrypt.compare(String(data.password), user.password))) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    req.session.user = { name: user.name, email: user.email };
+    res.json({ success: true, message: 'Logged in successfully.' });
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
+  }
+});
+
+app.post('/api/logout', function (req, res) {
+  req.session.destroy(function () { res.json({ success: true }); });
+});
+
+app.get('/api/me', function (req, res) {
+  if (req.session && req.session.user) return res.json({ user: req.session.user });
+  res.status(401).json({ user: null });
+});
+
+app.post('/api/contact', requireAuthApi, async function (req, res) {
+  var data = req.body || {};
+  var required = ['name', 'phone', 'email', 'serviceType', 'date', 'time', 'address'];
+  var missing = required.filter(function (f) { return !String(data[f] || '').trim(); });
+  if (missing.length) return res.status(400).json({ success: false, message: 'Missing fields: ' + missing.join(', ') });
+  var booking = { name: data.name, phone: data.phone, email: data.email, serviceType: data.serviceType, date: data.date, time: data.time, address: data.address, message: data.message || '', submittedAt: new Date() };
+  try {
+    var db = await getDb();
+    await db.collection('bookings').insertOne(booking);
+  } catch (err) { console.error('MongoDB save failed:', err.message); }
+  try {
+    var payload = {
+      sender: { name: process.env.BREVO_SENDER_NAME || 'Zurfael AC', email: process.env.BREVO_SENDER_EMAIL },
+      to: [{ name: process.env.CONTACT_RECIPIENT_EMAIL, email: process.env.CONTACT_RECIPIENT_EMAIL }],
+      subject: 'New Booking: ' + (data.serviceType || 'Service request') + ' from ' + data.name,
+      htmlContent: buildEmailHtml(data)
+    };
+    await fetch(BREVO_API_URL, {
+      method: 'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    res.json({ success: true, message: 'Booking request sent successfully.' });
+  } catch (err) {
+    console.error('Brevo send failed:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to send. Please try again or call us.' });
+  }
+});
+
+app.post('/api/admin/login', function (req, res) {
+  var data = req.body || {};
+  var adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  var adminPass = process.env.ADMIN_PASS || '';
+  if (!data.email || !data.password || String(data.email).trim().toLowerCase() !== adminEmail || String(data.password) !== adminPass) {
+    return res.status(401).json({ success: false, message: 'Invalid admin email or password.' });
+  }
+  req.session.isAdmin = true;
+  req.session.user = { name: 'Admin', email: adminEmail };
+  res.json({ success: true });
+});
+
+app.post('/api/admin/logout', function (req, res) {
+  req.session.destroy(function () { res.json({ success: true }); });
+});
+
+app.get('/api/admin/me', function (req, res) {
+  if (req.session && req.session.isAdmin) return res.json({ admin: true });
+  res.status(401).json({ admin: false });
+});
+
+app.get('/api/admin/bookings', requireAdmin, async function (req, res) {
+  try {
+    var db = await getDb();
+    var bookings = await db.collection('bookings').find().sort({ submittedAt: -1 }).limit(200).toArray();
+    res.json(bookings);
+  } catch (err) { res.status(500).json({ success: false, message: 'Database error.' }); }
+});
+
+app.delete('/api/admin/bookings/:id', requireAdmin, async function (req, res) {
+  try {
+    var db = await getDb();
+    var result = await db.collection('bookings').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: result.deletedCount > 0 });
+  } catch (err) { res.status(400).json({ success: false, message: 'Invalid booking id.' }); }
+});
+
+app.put('/api/admin/bookings/:id', requireAdmin, async function (req, res) {
+  try {
+    var db = await getDb();
+    var fields = ['name', 'email', 'phone', 'serviceType', 'date', 'time', 'address', 'message'];
+    var $set = {};
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      if (req.body && req.body[f] !== undefined) $set[f] = String(req.body[f]).trim();
+    }
+    if (!Object.keys($set).length) return res.status(400).json({ success: false, message: 'Nothing to update.' });
+    var result = await db.collection('bookings').updateOne({ _id: new ObjectId(req.params.id) }, { $set: $set });
+    res.json({ success: result.matchedCount > 0 });
+  } catch (err) { res.status(400).json({ success: false, message: 'Invalid booking id.' }); }
+});
+
+app.get('/api/admin/users', requireAdmin, async function (req, res) {
+  try {
+    var db = await getDb();
+    var users = await db.collection('users').find({}, { projection: { name: 1, email: 1, passwordPlain: 1, createdAt: 1 } }).sort({ createdAt: -1 }).limit(200).toArray();
+    res.json(users);
+  } catch (err) { res.status(500).json({ success: false, message: 'Database error.' }); }
+});
+
+app.delete('/api/admin/users/:id', requireAdmin, async function (req, res) {
+  try {
+    var db = await getDb();
+    var result = await db.collection('users').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: result.deletedCount > 0 });
+  } catch (err) { res.status(400).json({ success: false, message: 'Invalid user id.' }); }
+});
+
+app.put('/api/admin/users/:id', requireAdmin, async function (req, res) {
+  try {
+    var db = await getDb();
+    var id = new ObjectId(req.params.id);
+    var $set = {};
+    if (req.body && req.body.name !== undefined) $set.name = String(req.body.name).trim();
+    if (req.body && req.body.email !== undefined) {
+      var emailKey = String(req.body.email).trim().toLowerCase();
+      var dup = await db.collection('users').findOne({ email: emailKey, _id: { $ne: id } });
+      if (dup) return res.status(409).json({ success: false, message: 'This email is already used by another user.' });
+      $set.email = emailKey;
+    }
+    if (req.body && req.body.password && String(req.body.password).length >= 6) {
+      $set.password = await bcrypt.hash(String(req.body.password), 10);
+      $set.passwordPlain = String(req.body.password);
+    }
+    if (!Object.keys($set).length) return res.status(400).json({ success: false, message: 'Nothing to update.' });
+    var result = await db.collection('users').updateOne({ _id: id }, { $set: $set });
+    res.json({ success: result.matchedCount > 0 });
+  } catch (err) { res.status(400).json({ success: false, message: 'Invalid user id.' }); }
+});
 
 module.exports.handler = serverless(app);
