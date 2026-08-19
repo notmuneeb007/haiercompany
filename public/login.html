@@ -155,18 +155,7 @@
       <button type="submit" class="auth-btn" id="signupBtn">Create Account</button>
     </form>
 
-    <form id="otpForm" style="display:none">
-      <p class="auth-sub">A 6-digit security code has been sent to your email. Enter it below.</p>
-      <div class="field">
-        <label for="otpCode">Security Code</label>
-        <input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit code" autocomplete="one-time-code" required>
-      </div>
-      <button type="submit" class="auth-btn" id="verifyBtn">Verify Account</button>
-      <div class="auth-switch">
-        Didn't get the code?
-        <button type="button" id="resendBtn">Resend</button>
-      </div>
-    </form>
+
   </div>
 
   <script src="js/config.js"></script>
@@ -176,11 +165,9 @@
       var cfgBase = (typeof API_BASE !== 'undefined' ? API_BASE : '');
       var loginForm = document.getElementById('loginForm');
       var signupForm = document.getElementById('signupForm');
-      var otpForm = document.getElementById('otpForm');
       var errorEl = document.getElementById('authError');
       var tabLogin = document.getElementById('tabLogin');
       var tabSignup = document.getElementById('tabSignup');
-      var pendingEmail = '';
 
       function getNextUrl() {
         var match = window.location.search.match(/[?&]next=([^&]+)/);
@@ -201,19 +188,6 @@
         tabSignup.classList.toggle('active', !isLogin);
         loginForm.style.display = isLogin ? '' : 'none';
         signupForm.style.display = isLogin ? 'none' : '';
-        otpForm.style.display = 'none';
-        errorEl.style.display = 'none';
-      }
-
-      function showOtpStep(email) {
-        pendingEmail = email;
-        tabLogin.style.display = 'none';
-        tabSignup.style.display = 'none';
-        loginForm.style.display = 'none';
-        signupForm.style.display = 'none';
-        otpForm.style.display = '';
-        document.getElementById('otpCode').value = '';
-        document.getElementById('otpCode').focus();
         errorEl.style.display = 'none';
       }
 
@@ -263,47 +237,11 @@
 
       signupForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        var email = document.getElementById('signupEmail').value.trim();
         submit(document.getElementById('signupBtn'), cfgBase + '/api/register', {
           name: document.getElementById('signupName').value.trim(),
-          email: email,
+          email: document.getElementById('signupEmail').value.trim(),
           password: document.getElementById('signupPassword').value
-        }, function () { showOtpStep(email); });
-      });
-
-      otpForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        submit(document.getElementById('verifyBtn'), cfgBase + '/api/verify', {
-          email: pendingEmail,
-          code: document.getElementById('otpCode').value.trim()
         }, function () { redirectAfterAuth(); });
-      });
-
-      document.getElementById('resendBtn').addEventListener('click', function (e) {
-        var btn = document.getElementById('resendBtn');
-        btn.disabled = true;
-        btn.textContent = 'Sending...';
-        fetch(cfgBase + '/api/resend-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: pendingEmail })
-        })
-          .then(function (r) { return r.json(); })
-          .then(function (d) {
-            if (d.success) {
-              showError('A new code has been sent to your email.');
-              errorEl.style.background = '#e8f5e9';
-              errorEl.style.borderColor = '#a5d6a7';
-              errorEl.style.color = '#2e7d32';
-            } else {
-              showError(d.message || 'Could not resend. Try again.');
-            }
-          })
-          .catch(function () { showError('Network error. Please try again.'); })
-          .finally(function () {
-            btn.disabled = false;
-            btn.textContent = 'Resend';
-          });
       });
     })();
   </script>

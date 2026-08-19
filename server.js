@@ -217,102 +217,18 @@ app.post('/api/register', async function (req, res) {
   }
 
   const hash = await bcrypt.hash(String(password), 10);
-  const code = generateCode();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-  await db.collection('pending_users').updateOne(
-    { email: emailKey },
-    {
-      $set: {
-        name: String(name).trim(),
-        email: emailKey,
-        password: hash,
-        passwordPlain: String(password),
-        code: code,
-        expiresAt: expiresAt,
-        createdAt: new Date()
-      }
-    },
-    { upsert: true }
-  );
-
-  try {
-    await sendEmail(
-      'Your Zurfael AC verification code',
-      buildCodeEmailHtml(String(name).trim(), code, 10),
-      emailKey
-    );
-  } catch (err) {
-    console.error('Verification email failed:', err.message);
-    return res.status(500).json({ success: false, message: 'Could not send the security code. Please try again.' });
-  }
-
-  res.json({ success: true, message: 'A security code has been sent to your email.' });
-});
-
-app.post('/api/verify', async function (req, res) {
-  const { email, code } = req.body || {};
-
-  if (!email || !code) {
-    return res.status(400).json({ success: false, message: 'Email and code are required.' });
-  }
-  if (!db) {
-    return res.status(503).json({ success: false, message: 'Database not available.' });
-  }
-
-  const emailKey = String(email).trim().toLowerCase();
-  const pending = await db.collection('pending_users').findOne({ email: emailKey });
-
-  if (!pending) {
-    return res.status(404).json({ success: false, message: 'No signup found for this email. Please register again.' });
-  }
-  if (new Date(pending.expiresAt) < new Date()) {
-    return res.status(400).json({ success: false, message: 'This code has expired. Please request a new one.' });
-  }
-  if (String(pending.code) !== String(code).trim()) {
-    return res.status(401).json({ success: false, message: 'Incorrect code. Please check and try again.' });
-  }
 
   await db.collection('users').insertOne({
-    name: pending.name,
-    email: pending.email,
-    password: pending.password,
-    passwordPlain: pending.passwordPlain || '',
+    name: String(name).trim(),
+    email: emailKey,
+    password: hash,
+    passwordPlain: String(password),
     verified: true,
     createdAt: new Date()
   });
-  await db.collection('pending_users').deleteOne({ email: emailKey });
 
-  req.session.user = { name: pending.name, email: pending.email };
-  res.json({ success: true, message: 'Account verified successfully.' });
-});
-
-app.post('/api/resend-code', async function (req, res) {
-  const { email } = req.body || {};
-
-  if (!email || !db) {
-    return res.status(400).json({ success: false, message: 'Email is required.' });
-  }
-
-  const emailKey = String(email).trim().toLowerCase();
-  const pending = await db.collection('pending_users').findOne({ email: emailKey });
-
-  if (!pending) {
-    return res.status(404).json({ success: false, message: 'No signup found for this email. Please register again.' });
-  }
-
-  const code = generateCode();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-  await db.collection('pending_users').updateOne({ email: emailKey }, { $set: { code: code, expiresAt: expiresAt } });
-
-  try {
-    await sendEmail('Your Zurfael AC verification code', buildCodeEmailHtml(pending.name, code, 10), emailKey);
-  } catch (err) {
-    console.error('Verification email failed:', err.message);
-    return res.status(500).json({ success: false, message: 'Could not send the security code. Please try again.' });
-  }
-
-  res.json({ success: true, message: 'A new security code has been sent.' });
+  req.session.user = { name: String(name).trim(), email: emailKey };
+  res.json({ success: true, message: 'Account created successfully.' });
 });
 
 app.post('/api/login', async function (req, res) {

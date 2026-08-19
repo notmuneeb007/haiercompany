@@ -139,55 +139,12 @@ app.post('/api/register', async function (req, res) {
     const existing = await db.collection('users').findOne({ email: emailKey });
     if (existing) return res.status(409).json({ success: false, message: 'This email is already registered. Please login.' });
     const hash = await bcrypt.hash(String(password), 10);
-    const code = generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await db.collection('pending_users').updateOne({ email: emailKey }, {
-      $set: { name: String(name).trim(), email: emailKey, password: hash, passwordPlain: String(password), code: code, expiresAt: expiresAt, createdAt: new Date() }
-    }, { upsert: true });
-    await sendEmail('Your Zurfael AC verification code', buildCodeEmailHtml(String(name).trim(), code, 10), emailKey);
-    res.json({ success: true, message: 'A security code has been sent to your email.' });
+    await db.collection('users').insertOne({ name: String(name).trim(), email: emailKey, password: hash, passwordPlain: String(password), verified: true, createdAt: new Date() });
+    req.session.user = { name: String(name).trim(), email: emailKey };
+    res.json({ success: true, message: 'Account created successfully.' });
   } catch (err) {
     console.error('Register error:', err.message);
-    res.status(500).json({ success: false, message: 'Could not send the security code. Please try again.' });
-  }
-});
-
-app.post('/api/verify', async function (req, res) {
-  const { email, code } = req.body || {};
-  if (!email || !code) return res.status(400).json({ success: false, message: 'Email and code are required.' });
-  try {
-    const db = await getDb();
-    const emailKey = String(email).trim().toLowerCase();
-    const pending = await db.collection('pending_users').findOne({ email: emailKey });
-    if (!pending) return res.status(404).json({ success: false, message: 'No signup found for this email. Please register again.' });
-    if (new Date(pending.expiresAt) < new Date()) return res.status(400).json({ success: false, message: 'This code has expired. Please request a new one.' });
-    if (String(pending.code) !== String(code).trim()) return res.status(401).json({ success: false, message: 'Incorrect code. Please check and try again.' });
-    await db.collection('users').insertOne({ name: pending.name, email: pending.email, password: pending.password, passwordPlain: pending.passwordPlain || '', verified: true, createdAt: new Date() });
-    await db.collection('pending_users').deleteOne({ email: emailKey });
-    req.session.user = { name: pending.name, email: pending.email };
-    res.json({ success: true, message: 'Account verified successfully.' });
-  } catch (err) {
-    console.error('Verify error:', err.message);
-    res.status(500).json({ success: false, message: 'Verification failed. Please try again.' });
-  }
-});
-
-app.post('/api/resend-code', async function (req, res) {
-  const { email } = req.body || {};
-  if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
-  try {
-    const db = await getDb();
-    const emailKey = String(email).trim().toLowerCase();
-    const pending = await db.collection('pending_users').findOne({ email: emailKey });
-    if (!pending) return res.status(404).json({ success: false, message: 'No signup found for this email. Please register again.' });
-    const code = generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await db.collection('pending_users').updateOne({ email: emailKey }, { $set: { code: code, expiresAt: expiresAt } });
-    await sendEmail('Your Zurfael AC verification code', buildCodeEmailHtml(pending.name, code, 10), emailKey);
-    res.json({ success: true, message: 'A new security code has been sent.' });
-  } catch (err) {
-    console.error('Resend error:', err.message);
-    res.status(500).json({ success: false, message: 'Could not send the security code. Please try again.' });
+    res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
   }
 });
 
